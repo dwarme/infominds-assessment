@@ -7,6 +7,7 @@ public class BackendContext(DbContextOptions<BackendContext> options) : DbContex
     public DbSet<CustomerCategory> CustomerCategories => Set<CustomerCategory>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Document> Documents => Set<Document>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -15,6 +16,7 @@ public class BackendContext(DbContextOptions<BackendContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new CustomerCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
         modelBuilder.ApplyConfiguration(new DepartmentConfiguration());
+        modelBuilder.ApplyConfiguration(new DocumentConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 
@@ -26,5 +28,6 @@ public class BackendContext(DbContextOptions<BackendContext> options) : DbContex
         new SupplierSeeding(this).Seed();
         new CustomerSeeding(this).Seed();
         new EmployeeSeeding(this).Seed();
+        new DocumentSeeding(this).Seed();
     }
 }
