@@ -6,11 +6,13 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    TextField,
     Typography,
     styled,
     tableCellClasses,
   } from "@mui/material";
-  import { useEffect, useState } from "react";
+  import { useEffect, useMemo, useState } from "react";
+  import { debounce } from "../utils/debounce";
 
   interface CustomerCategory {
     id: number;
@@ -32,22 +34,58 @@ import {
   
   export default function CustomerListPage() {
     const [list, setList] = useState<CustomerListQuery[]>([]);
-  
+    const [searchText, setSearchText] = useState("");
+
+    /*
+     * Debounce the fetch customers function to prevent multiple requests
+     * when the user is typing.
+     * This is useful to prevent the server from being overwhelmed by multiple requests.
+     */
+    const debouncedFetchCustomers = useMemo(
+      () =>
+        debounce((search: string) => {
+          const params = new URLSearchParams();
+          if (search) {
+            params.set("SearchText", search);
+          }
+
+          const query = params.toString();
+          const url = query
+            ? `/api/customers/list?${query}`
+            : "/api/customers/list";
+
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              setList(data as CustomerListQuery[]);
+            });
+        }, 300),
+      []
+    );
+
     useEffect(() => {
-      fetch("/api/customers/list")
-        .then((response) => {
-          return response.json();
-        })
-        .then((data) => {
-          setList(data as CustomerListQuery[]);
-        });
-    }, []);
+      debouncedFetchCustomers(searchText);
+
+      // Cancel the debounced function when the component unmounts.
+      return () => {
+        debouncedFetchCustomers.cancel();
+      };
+    }, [searchText, debouncedFetchCustomers]);
   
     return (
       <>
         <Typography variant="h4" sx={{ textAlign: "center", mt: 4, mb: 4 }}>
           Customers
         </Typography>
+
+        <TextField
+          label="Search: Name, Email"
+          variant="outlined"
+          fullWidth
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          sx={{ mb: 4 }}
+        />
   
         <TableContainer component={Paper}>
           <Table sx={{ minWidth: 650 }} aria-label="simple table">
