@@ -1,8 +1,29 @@
 namespace Backend.Features.Customers;
 
-public class CustomersListQuery : IRequest<List<CustomersListQueryResponse>>
+/// <summary>
+/// Query parameters for the customers list endpoint.
+/// Bound from query string via [AsParameters] on GET /api/customers/list.
+/// </summary>
+public class CustomersListQuery : IRequest<CustomersListQueryPaginatedResponse>
 {
+    /// <summary>Filters customers by name or email (case-insensitive, partial match).</summary>
     public string? SearchText { get; set; }
+
+    /// <summary>1-based page number. Defaults to 1.</summary>
+    public int? Page { get; set; } = 1;
+
+    /// <summary>Number of items per page. Defaults to 50, capped at 100.</summary>
+    public int? PageSize { get; set; } = 50;
+}
+
+/// <summary>Paginated wrapper returned by the customers list endpoint.</summary>
+public class CustomersListQueryPaginatedResponse
+{
+    public List<CustomersListQueryResponse> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; }
 }
 
 public class CustomersListQueryResponse
@@ -25,20 +46,35 @@ public class CustomersListQueryResponseCustomerCategory
 }
 
 
-internal class CustomersListQueryHandler(BackendContext context) : IRequestHandler<CustomersListQuery, List<CustomersListQueryResponse>>
+internal class CustomersListQueryHandler(BackendContext context) : IRequestHandler<CustomersListQuery, CustomersListQueryPaginatedResponse>
 {
     private readonly BackendContext context = context;
 
-    public async Task<List<CustomersListQueryResponse>> Handle(CustomersListQuery request, CancellationToken cancellationToken)
+    // Prevent oversized page requests from loading too many rows at once.
+    private const int MaxPageSize = 100;
+
+    public async Task<CustomersListQueryPaginatedResponse> Handle(CustomersListQuery request, CancellationToken cancellationToken)
     {
+        var page = request.Page is null or < 1 ? 1 : request.Page.Value;
+        var pageSize = request.PageSize is null or < 1 ? 50 : Math.Min(request.PageSize.Value, MaxPageSize);
+
         var query = context.Customers.AsQueryable();
         if (!string.IsNullOrEmpty(request.SearchText)) {
             var searchTextFormatted = request.SearchText.ToLower();
             query = query.Where(q => q.Name.ToLower().Contains(searchTextFormatted) || q.Email.ToLower().Contains(searchTextFormatted) );
         }
 
-        var data = await query.OrderBy(q => q.Name).ToListAsync(cancellationToken);
-        var result = new List<CustomersListQueryResponse>();
+        // Count before paging so the client can build pagination controls.
+        var totalCount = await query.CountAsync(cancellationToken);
+        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var data = await query
+            .OrderBy(q => q.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = new List<CustomersListQueryResponse>();
 
         foreach (var item in data)
         {
@@ -53,19 +89,27 @@ internal class CustomersListQueryHandler(BackendContext context) : IRequestHandl
                 CustomerCategory = null,
             };
 
-            // Customer Category if exists and set it to the result item if not null
+            // Category is optional; not all customers have one assigned.
             var customerCategory = await context.CustomerCategories.SingleOrDefaultAsync(q => q.Id == item.CustomerCategoryId, cancellationToken);
             if (customerCategory is not null) {
                 resultItem.CustomerCategory = new CustomersListQueryResponseCustomerCategory
                 {
+                    Id = customerCategory.Id,
                     Code = customerCategory.Code,
                     Description = customerCategory.Description
                 };
             }
 
-            result.Add(resultItem);
+            items.Add(resultItem);
         }
 
-        return result;
+        return new CustomersListQueryPaginatedResponse
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+        };
     }
 }
