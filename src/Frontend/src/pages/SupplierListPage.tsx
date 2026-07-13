@@ -11,6 +11,7 @@ import {
   tableCellClasses,
 } from "@mui/material";
 import { useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 
 interface SupplierListQuery {
   id: number;
@@ -55,7 +56,9 @@ export default function SupplierListPage() {
                 key={row.id}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                <TableCell>{row.name}</TableCell>
+                <TableCell>
+                  <RouterLink to={`/suppliers/${row.id}`}>{row.name}</RouterLink>
+                </TableCell>
                 <TableCell>{row.address}</TableCell>
                 <TableCell>{row.email}</TableCell>
                 <TableCell>{row.phone}</TableCell>

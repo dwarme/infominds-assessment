@@ -14,6 +14,7 @@ import {
   tableCellClasses,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { debounce } from "../utils/debounce";
 
 interface CustomerCategory {
@@ -121,7 +122,9 @@ export default function CustomerListPage() {
                 key={row.id}
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                <TableCell>{row.name}</TableCell>
+                <TableCell>
+                  <RouterLink to={`/customers/${row.id}`}>{row.name}</RouterLink>
+                </TableCell>
                 <TableCell>{row.address}</TableCell>
                 <TableCell>{row.email}</TableCell>
                 <TableCell>{row.phone}</TableCell>
