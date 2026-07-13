@@ -34,5 +34,9 @@ static class RouteRegistrationExtensions
                     .WithName("GetCustomerDocumentContent")
                     .WithOpenApi();
 
+        apiGroup.MapGet("customers/{customerId}/documents/{documentId}", async ([AsParameters] CustomerDocumentDownloadQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("DownloadCustomerDocument")
+                    .WithOpenApi();
+
     }
 }
