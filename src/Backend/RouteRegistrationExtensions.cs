@@ -37,6 +37,22 @@ static class RouteRegistrationExtensions
         apiGroup.MapGet("customers/{customerId}/documents/{documentId}", async ([AsParameters] CustomerDocumentDownloadQuery query, IMediator mediator) => await mediator.Send(query))
                     .WithName("DownloadCustomerDocument")
                     .WithOpenApi();
+    
+        apiGroup.MapGet("suppliers/{supplierId}", async ([AsParameters] SupplierDetailQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("GetSupplierById")
+                    .WithOpenApi();
+
+        apiGroup.MapGet("suppliers/{supplierId}/documents", async ([AsParameters] SupplierDocumentsListQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("ListSupplierDocuments")
+                    .WithOpenApi();
+
+        apiGroup.MapGet("suppliers/{supplierId}/documents/{documentId}/content", async ([AsParameters] SupplierDocumentContentQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("GetSupplierDocumentContent")
+                    .WithOpenApi();
+
+        apiGroup.MapGet("suppliers/{supplierId}/documents/{documentId}", async ([AsParameters] SupplierDocumentDownloadQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("DownloadSupplierDocument")
+                    .WithOpenApi();
 
     }
 }
