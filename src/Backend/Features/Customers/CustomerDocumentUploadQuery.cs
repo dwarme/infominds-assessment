@@ -20,6 +20,9 @@ internal class CustomerDocumentUploadQueryHandler(BackendContext context)
         if (request.File.Length == 0)
             return Results.BadRequest(new { error = "File is required." });
 
+        if (!DocumentUploadHelper.IsWithinSizeLimit(request.File.Length))
+            return Results.BadRequest(new { error = DocumentUploadHelper.MaxFileSizeError });
+
         var title = Path.GetFileName(request.File.FileName);
         if (!DocumentUploadHelper.IsAllowedExtension(title))
             return Results.BadRequest(new { error = "Only .txt and .md files are allowed." });

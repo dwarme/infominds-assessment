@@ -1,3 +1,6 @@
+using Backend.Features.Documents;
+using Microsoft.AspNetCore.Http.Features;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = DocumentUploadLimits.MaxFileSizeBytes;
+});
 
 // Setup Database
 var connectionString = builder.Configuration.GetConnectionString("Backend") ?? throw new ArgumentNullException("Backend Connectionsting not set");

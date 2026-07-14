@@ -1,10 +1,23 @@
 namespace Backend.Features.Documents;
 
+public static class DocumentUploadLimits
+{
+    public const long MaxFileSizeBytes = 1024 * 1024;
+}
+
 internal static class DocumentUploadHelper
 {
+    internal const long MaxFileSizeBytes = DocumentUploadLimits.MaxFileSizeBytes;
+
     internal static bool IsAllowedExtension(string fileName) =>
         fileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase) ||
         fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
+
+    internal static bool IsWithinSizeLimit(long fileSize) =>
+        fileSize > 0 && fileSize <= MaxFileSizeBytes;
+
+    internal static string MaxFileSizeError =>
+        "File size exceeds the 1 MB limit.";
 }
 
 internal static class DocumentDownloadHelper
