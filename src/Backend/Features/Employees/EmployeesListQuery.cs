@@ -11,36 +11,15 @@ public class EmployeesListQuery : IRequest<EmployeesListQueryPaginatedResponse>
 
 public class EmployeesListQueryPaginatedResponse
 {
-    public List<EmployeesListQueryResponse> Items { get; set; } = [];
+    public List<EmployeeDto> Items { get; set; } = [];
     public int Page { get; set; }
     public int PageSize { get; set; }
     public int TotalCount { get; set; }
     public int TotalPages { get; set; }
 }
 
-public class EmployeesListQueryResponse
-{
-    public int Id { get; set; }
-    public string Code { get; internal set; } = "";
-    public string FirstName { get; set; } = "";
-    public string LastName { get; set; } = "";
-    public string Address { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string Phone { get; set; } = "";
-    public EmployeesListQueryResponseDepartment? Department { get; set; }
-}
-
-public class EmployeesListQueryResponseDepartment
-{
-    public string Code { get; set; } = "";
-    public string Description { get; set; } = "";
-}
-
-
 internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandler<EmployeesListQuery, EmployeesListQueryPaginatedResponse>
 {
-    private readonly BackendContext context = context;
-
     public async Task<EmployeesListQueryPaginatedResponse> Handle(EmployeesListQuery request, CancellationToken cancellationToken)
     {
         var (page, pageSize) = ListPagination.Normalize(request.Page, request.PageSize);
@@ -71,41 +50,16 @@ internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandl
         var totalPages = ListPagination.GetTotalPages(totalCount, pageSize);
 
         var data = await query
+            .Include(e => e.Department)
             .OrderBy(q => q.LastName)
             .ThenBy(q => q.FirstName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        var items = new List<EmployeesListQueryResponse>();
-
-        foreach (var item in data)
-        {
-            var resultItem = new EmployeesListQueryResponse
-            {
-                Id = item.Id,
-                Code = item.Code,
-                FirstName = item.FirstName,
-                LastName = item.LastName,
-                Address = item.Address,
-                Email = item.Email,
-                Phone = item.Phone,
-            };
-
-            var department = await context.Departments.SingleOrDefaultAsync(q => q.Id == item.DepartmentId, cancellationToken);
-            if (department is not null)
-                resultItem.Department = new EmployeesListQueryResponseDepartment
-                {
-                    Code = department.Code,
-                    Description = department.Description
-                };
-
-            items.Add(resultItem);
-        }
-
         return new EmployeesListQueryPaginatedResponse
         {
-            Items = items,
+            Items = data.Select(EmployeeDto.From).ToList(),
             Page = page,
             PageSize = pageSize,
             TotalCount = totalCount,
