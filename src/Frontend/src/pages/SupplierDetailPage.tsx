@@ -17,6 +17,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import DocumentContentModal from "../components/DocumentContentModal";
+import DocumentUploadDialog, { UploadedDocument } from "../components/DocumentUploadDialog";
 import { downloadDocument } from "../utils/downloadDocument";
 
 interface SupplierDetail {
@@ -46,6 +47,15 @@ export default function SupplierDetailPage() {
   const [selectedDocument, setSelectedDocument] = useState<DocumentListItem | null>(null);
   const [modalContent, setModalContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  const loadDocuments = () => {
+    fetch(`/api/suppliers/${supplierId}/documents`)
+      .then((response) => response.json())
+      .then((data) => {
+        setDocuments((data.items ?? []) as DocumentListItem[]);
+      });
+  };
 
   useEffect(() => {
     if (!supplierId) return;
@@ -62,11 +72,7 @@ export default function SupplierDetailPage() {
         if (data) setSupplier(data as SupplierDetail);
       });
 
-    fetch(`/api/suppliers/${supplierId}/documents`)
-      .then((response) => response.json())
-      .then((data) => {
-        setDocuments((data.items ?? []) as DocumentListItem[]);
-      });
+    loadDocuments();
   }, [supplierId]);
 
   const handleDocumentClick = (document: DocumentListItem) => {
@@ -96,6 +102,10 @@ export default function SupplierDetailPage() {
       `/api/suppliers/${supplierId}/documents/${document.id}`,
       document.title,
     );
+  };
+
+  const handleUploaded = (document: UploadedDocument) => {
+    setDocuments((current) => [document, ...current]);
   };
 
   if (notFound) {
@@ -138,9 +148,12 @@ export default function SupplierDetailPage() {
         <Typography><strong>Phone:</strong> {supplier.phone}</Typography>
       </Paper>
 
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Documents
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="h6">Documents</Typography>
+        <Button variant="contained" onClick={() => setUploadOpen(true)}>
+          Upload document
+        </Button>
+      </Box>
 
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="documents table">
@@ -199,6 +212,13 @@ export default function SupplierDetailPage() {
             ? () => handleDownload(selectedDocument)
             : undefined
         }
+      />
+
+      <DocumentUploadDialog
+        open={uploadOpen}
+        uploadUrl={`/api/suppliers/${supplierId}/documents`}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={handleUploaded}
       />
     </>
   );

@@ -17,6 +17,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import DocumentContentModal from "../components/DocumentContentModal";
+import DocumentUploadDialog, { UploadedDocument } from "../components/DocumentUploadDialog";
 import { downloadDocument } from "../utils/downloadDocument";
 
 interface CustomerCategory {
@@ -54,6 +55,15 @@ export default function CustomerDetailPage() {
   const [selectedDocument, setSelectedDocument] = useState<DocumentListItem | null>(null);
   const [modalContent, setModalContent] = useState<string | null>(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  const loadDocuments = () => {
+    fetch(`/api/customers/${customerId}/documents`)
+      .then((response) => response.json())
+      .then((data) => {
+        setDocuments((data.items ?? []) as DocumentListItem[]);
+      });
+  };
 
   useEffect(() => {
     if (!customerId) return;
@@ -70,11 +80,7 @@ export default function CustomerDetailPage() {
         if (data) setCustomer(data as CustomerDetail);
       });
 
-    fetch(`/api/customers/${customerId}/documents`)
-      .then((response) => response.json())
-      .then((data) => {
-        setDocuments((data.items ?? []) as DocumentListItem[]);
-      });
+    loadDocuments();
   }, [customerId]);
 
   const handleDocumentClick = (document: DocumentListItem) => {
@@ -104,6 +110,10 @@ export default function CustomerDetailPage() {
       `/api/customers/${customerId}/documents/${document.id}`,
       document.title,
     );
+  };
+
+  const handleUploaded = (document: UploadedDocument) => {
+    setDocuments((current) => [document, ...current]);
   };
 
   if (notFound) {
@@ -150,9 +160,12 @@ export default function CustomerDetailPage() {
         </Typography>
       </Paper>
 
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Documents
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="h6">Documents</Typography>
+        <Button variant="contained" onClick={() => setUploadOpen(true)}>
+          Upload document
+        </Button>
+      </Box>
 
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="documents table">
@@ -211,6 +224,13 @@ export default function CustomerDetailPage() {
             ? () => handleDownload(selectedDocument)
             : undefined
         }
+      />
+
+      <DocumentUploadDialog
+        open={uploadOpen}
+        uploadUrl={`/api/customers/${customerId}/documents`}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={handleUploaded}
       />
     </>
   );
