@@ -58,6 +58,8 @@ internal class CustomersListQueryHandler(BackendContext context) : IRequestHandl
         var page = request.Page is null or < 1 ? 1 : request.Page.Value;
         var pageSize = request.PageSize is null or < 1 ? 50 : Math.Min(request.PageSize.Value, MaxPageSize);
 
+        SearchQueryLimits.EnsureWithinLimit(request.SearchText, "SearchText");
+
         var query = context.Customers.AsQueryable();
         if (!string.IsNullOrEmpty(request.SearchText)) {
             var searchTextFormatted = request.SearchText.ToLower();

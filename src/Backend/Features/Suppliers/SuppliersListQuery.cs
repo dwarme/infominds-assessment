@@ -23,6 +23,8 @@ internal class SupplierListQueryHandler(BackendContext context) : IRequestHandle
 
     public async Task<List<SupplierListQueryResponse>> Handle(SupplierListQuery request, CancellationToken cancellationToken)
     {
+        SearchQueryLimits.EnsureWithinLimit(request.Name, "Name");
+
         var query = context.Suppliers.AsQueryable();
         if (!string.IsNullOrEmpty(request.Name))
             query = query.Where(q => q.Name.ToLower().Contains(request.Name.ToLower()));

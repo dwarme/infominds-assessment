@@ -31,6 +31,9 @@ internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandl
 
     public async Task<List<EmployeesListQueryResponse>> Handle(EmployeesListQuery request, CancellationToken cancellationToken)
     {
+        SearchQueryLimits.EnsureWithinLimit(request.FirstName, "FirstName");
+        SearchQueryLimits.EnsureWithinLimit(request.LastName, "LastName");
+
         var query = context.Employees.AsQueryable();
         if (!string.IsNullOrEmpty(request.FirstName))
             query = query.Where(q => q.FirstName.ToLower().Contains(request.FirstName.ToLower()));
