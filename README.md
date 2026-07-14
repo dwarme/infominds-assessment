@@ -7,6 +7,10 @@ Assessment exercise for backend and frontend developer, preconfigured to work wi
 - **Backend:** .NET 9, MediatR, EF Core, SQLite
 - **Frontend:** React, TypeScript, Vite, MUI
 
+![Backend architecture](docs/backend-architecture.svg)
+
+![API architecture](docs/api-architecture.svg)
+
 ## Getting started
 
 1. Open the repo in GitHub Codespaces (or locally with .NET 9 and Node.js).
@@ -61,6 +65,8 @@ The app includes a floating chat widget (bottom-right) that answers natural-lang
 Without an API key, the backend still starts; chat returns `503` and the widget shows a configuration warning.
 
 ### How it works
+
+![AI chat architecture](docs/ai-chat-architecture.svg)
 
 - **LLM:** OpenAI Chat Completions API (`gpt-4o-mini`) with **tool calling**
 - **Data retrieval:** the model picks from EF-backed tools; the backend runs the query and returns JSON results to the model for the final answer
