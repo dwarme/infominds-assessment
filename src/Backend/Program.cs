@@ -1,5 +1,9 @@
+using Backend.Features.Chat;
 using Backend.Features.Documents;
 using Microsoft.AspNetCore.Http.Features;
+
+var contentRoot = Directory.GetCurrentDirectory();
+EnvFileLoader.Load(Path.Combine(contentRoot, ".env.local"));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.AddChatServices(builder.Configuration);
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = DocumentUploadLimits.MaxFileSizeBytes;

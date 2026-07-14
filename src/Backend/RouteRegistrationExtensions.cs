@@ -1,3 +1,4 @@
+using Backend.Features.Chat;
 using Backend.Features.Employees;
 using Backend.Features.Suppliers;
 using Backend.Features.Customers;
@@ -65,6 +66,14 @@ static class RouteRegistrationExtensions
                     .WithName("UploadSupplierDocument")
                     .WithOpenApi()
                     .DisableAntiforgery();
+
+        apiGroup.MapGet("chat/status", async (IMediator mediator) => await mediator.Send(new ChatStatusQuery()))
+                    .WithName("GetChatStatus")
+                    .WithOpenApi();
+
+        apiGroup.MapPost("chat", async (ChatQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("PostChat")
+                    .WithOpenApi();
 
     }
 }

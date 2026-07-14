@@ -6,3 +6,4 @@ global using Backend.Shared;
 global using Backend.Shared.Database;
 global using MediatR;
 global using Bogus;
+global using Microsoft.Extensions.Options;
