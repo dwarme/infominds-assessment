@@ -37,7 +37,13 @@ static class RouteRegistrationExtensions
         apiGroup.MapGet("customers/{customerId}/documents/{documentId}", async ([AsParameters] CustomerDocumentDownloadQuery query, IMediator mediator) => await mediator.Send(query))
                     .WithName("DownloadCustomerDocument")
                     .WithOpenApi();
-    
+
+        apiGroup.MapPost("customers/{customerId}/documents", async (int customerId, IFormFile file, IMediator mediator) =>
+                    await mediator.Send(new CustomerDocumentUploadQuery { CustomerId = customerId, File = file }))
+                    .WithName("UploadCustomerDocument")
+                    .WithOpenApi()
+                    .DisableAntiforgery();
+
         apiGroup.MapGet("suppliers/{supplierId}", async ([AsParameters] SupplierDetailQuery query, IMediator mediator) => await mediator.Send(query))
                     .WithName("GetSupplierById")
                     .WithOpenApi();
@@ -53,6 +59,12 @@ static class RouteRegistrationExtensions
         apiGroup.MapGet("suppliers/{supplierId}/documents/{documentId}", async ([AsParameters] SupplierDocumentDownloadQuery query, IMediator mediator) => await mediator.Send(query))
                     .WithName("DownloadSupplierDocument")
                     .WithOpenApi();
+
+        apiGroup.MapPost("suppliers/{supplierId}/documents", async (int supplierId, IFormFile file, IMediator mediator) =>
+                    await mediator.Send(new SupplierDocumentUploadQuery { SupplierId = supplierId, File = file }))
+                    .WithName("UploadSupplierDocument")
+                    .WithOpenApi()
+                    .DisableAntiforgery();
 
     }
 }
