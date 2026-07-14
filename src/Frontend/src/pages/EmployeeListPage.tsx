@@ -8,11 +8,11 @@ import {
   TableRow,
   TextField,
   Typography,
-  styled,
-  tableCellClasses,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
-import { debounce } from "../utils/debounce";
+import ListPaginationFooter from "../components/ListPaginationFooter";
+import StyledTableHeadCell from "../components/StyledTableHeadCell";
+import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
+import { usePaginatedList } from "../hooks/usePaginatedList";
 
 interface EmployeeDepartment {
   code: string;
@@ -31,38 +31,9 @@ interface EmployeeListItem {
 }
 
 export default function EmployeeListPage() {
-  const [list, setList] = useState<EmployeeListItem[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [debouncedSearchText, setDebouncedSearchText] = useState("");
-
-  const debouncedSetSearch = useMemo(
-    () =>
-      debounce((search: string) => {
-        setDebouncedSearchText(search);
-      }, 300),
-    []
-  );
-
-  useEffect(() => {
-    debouncedSetSearch(searchText);
-
-    return () => {
-      debouncedSetSearch.cancel();
-    };
-  }, [searchText, debouncedSetSearch]);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (debouncedSearchText) {
-      params.set("SearchText", debouncedSearchText);
-    }
-
-    fetch(`/api/employees/list?${params.toString()}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setList(data as EmployeeListItem[]);
-      });
-  }, [debouncedSearchText]);
+  const { searchText, setSearchText, debouncedSearchText } = useDebouncedSearch();
+  const { list, page, setPage, totalCount, totalPages } =
+    usePaginatedList<EmployeeListItem>("/api/employees/list", debouncedSearchText);
 
   return (
     <>
@@ -117,14 +88,14 @@ export default function EmployeeListPage() {
             )}
           </TableBody>
         </Table>
+        <ListPaginationFooter
+          totalCount={totalCount}
+          totalPages={totalPages}
+          page={page}
+          onPageChange={setPage}
+          itemLabel="employees"
+        />
       </TableContainer>
     </>
   );
 }
-
-const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.primary.light,
-    color: theme.palette.common.white,
-  },
-}));

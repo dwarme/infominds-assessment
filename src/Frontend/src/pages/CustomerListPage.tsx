@@ -1,7 +1,5 @@
 import {
-  Box,
   Paper,
-  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -10,12 +8,12 @@ import {
   TableRow,
   TextField,
   Typography,
-  styled,
-  tableCellClasses,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { debounce } from "../utils/debounce";
+import ListPaginationFooter from "../components/ListPaginationFooter";
+import StyledTableHeadCell from "../components/StyledTableHeadCell";
+import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
+import { usePaginatedList } from "../hooks/usePaginatedList";
 
 interface CustomerCategory {
   id: number;
@@ -23,7 +21,7 @@ interface CustomerCategory {
   description: string;
 }
 
-interface CustomerListQuery {
+interface CustomerListItem {
   id: number;
   name: string;
   address: string;
@@ -33,61 +31,10 @@ interface CustomerListQuery {
   customerCategory: CustomerCategory | null;
 }
 
-interface CustomersListPaginatedResponse {
-  items: CustomerListQuery[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
-
-const PAGE_SIZE = 50;
-
 export default function CustomerListPage() {
-  const [list, setList] = useState<CustomerListQuery[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [debouncedSearchText, setDebouncedSearchText] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-
-  const debouncedSetSearch = useMemo(
-    () =>
-      debounce((search: string) => {
-        setDebouncedSearchText(search);
-      }, 300),
-    []
-  );
-
-  useEffect(() => {
-    debouncedSetSearch(searchText);
-
-    return () => {
-      debouncedSetSearch.cancel();
-    };
-  }, [searchText, debouncedSetSearch]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchText]);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (debouncedSearchText) {
-      params.set("SearchText", debouncedSearchText);
-    }
-    params.set("Page", String(page));
-    params.set("PageSize", String(PAGE_SIZE));
-
-    fetch(`/api/customers/list?${params.toString()}`)
-      .then((response) => response.json())
-      .then((data) => {
-        const result = data as CustomersListPaginatedResponse;
-        setList(result.items);
-        setTotalCount(result.totalCount);
-        setTotalPages(result.totalPages);
-      });
-  }, [debouncedSearchText, page]);
+  const { searchText, setSearchText, debouncedSearchText } = useDebouncedSearch();
+  const { list, page, setPage, totalCount, totalPages } =
+    usePaginatedList<CustomerListItem>("/api/customers/list", debouncedSearchText);
 
   return (
     <>
@@ -134,36 +81,14 @@ export default function CustomerListPage() {
             ))}
           </TableBody>
         </Table>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 1,
-            py: 2,
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            {totalCount} customers
-          </Typography>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, value) => setPage(value)}
-            color="primary"
-            showFirstButton
-            showLastButton
-            disabled={totalPages === 0}
-          />
-        </Box>
+        <ListPaginationFooter
+          totalCount={totalCount}
+          totalPages={totalPages}
+          page={page}
+          onPageChange={setPage}
+          itemLabel="customers"
+        />
       </TableContainer>
     </>
   );
 }
-
-const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.primary.light,
-    color: theme.palette.common.white,
-  },
-}));
