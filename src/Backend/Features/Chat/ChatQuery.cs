@@ -6,7 +6,7 @@ public class ChatQuery : IRequest<IResult>
     public string Message { get; set; } = "";
 }
 
-internal class ChatQueryHandler(IOptions<OpenAiOptions> options)
+internal class ChatQueryHandler(IOptions<OpenAiOptions> options, ChatSessionStore sessionStore)
     : IRequestHandler<ChatQuery, IResult>
 {
     public Task<IResult> Handle(ChatQuery request, CancellationToken cancellationToken)
@@ -24,11 +24,52 @@ internal class ChatQueryHandler(IOptions<OpenAiOptions> options)
             return Task.FromResult(Results.BadRequest(new { error = "Message is required." }));
         }
 
+        var conversationId = ResolveConversationId(request.ConversationId);
+        if (conversationId is null)
+        {
+            return Task.FromResult(Results.NotFound(new
+            {
+                error = "Conversation not found.",
+            }));
+        }
+
+        sessionStore.AddMessage(conversationId.Value, new ChatMessage
+        {
+            Role = ChatMessageRoles.User,
+            Content = request.Message.Trim(),
+            Timestamp = DateTimeOffset.UtcNow,
+        });
+
+        var history = sessionStore.TryGetSession(conversationId.Value, out var messages)
+            ? messages
+            : [];
+
+        var userTurnCount = history.Count(message => message.Role == ChatMessageRoles.User);
+        var reply = $"Received turn {userTurnCount}. This conversation has {history.Count} messages stored. LLM integration is coming in Phase 3.";
+
+        sessionStore.AddMessage(conversationId.Value, new ChatMessage
+        {
+            Role = ChatMessageRoles.Assistant,
+            Content = reply,
+            Timestamp = DateTimeOffset.UtcNow,
+        });
+
         return Task.FromResult(Results.Json(new ChatResponse
         {
-            ConversationId = request.ConversationId ?? Guid.NewGuid(),
-            Reply = "Chat is not implemented yet. OpenAI configuration is ready.",
+            ConversationId = conversationId.Value,
+            Reply = reply,
         }));
+    }
+
+    private Guid? ResolveConversationId(Guid? conversationId)
+    {
+        if (conversationId is null)
+            return sessionStore.CreateSession();
+
+        if (sessionStore.TryGetSession(conversationId.Value, out _))
+            return conversationId.Value;
+
+        return null;
     }
 }
 

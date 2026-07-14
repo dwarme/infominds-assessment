@@ -25,6 +25,8 @@ public static class ChatServiceCollectionExtensions
                     options.BaseUrl) ?? "https://api.openai.com/v1";
             });
 
+        services.AddSingleton<ChatSessionStore>();
+
         return services;
     }
 
