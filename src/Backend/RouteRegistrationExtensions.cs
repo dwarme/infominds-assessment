@@ -75,5 +75,13 @@ static class RouteRegistrationExtensions
                     .WithName("PostChat")
                     .WithOpenApi();
 
+        apiGroup.MapGet("chat/tools", async (IMediator mediator) => await mediator.Send(new ChatToolsListQuery()))
+                    .WithName("ListChatTools")
+                    .WithOpenApi();
+
+        apiGroup.MapPost("chat/tools/invoke", async (ChatToolInvokeQuery query, IMediator mediator) => await mediator.Send(query))
+                    .WithName("InvokeChatTool")
+                    .WithOpenApi();
+
     }
 }

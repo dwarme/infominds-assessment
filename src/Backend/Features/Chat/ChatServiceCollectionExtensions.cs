@@ -26,6 +26,8 @@ public static class ChatServiceCollectionExtensions
             });
 
         services.AddSingleton<ChatSessionStore>();
+        services.AddScoped<ChatDataTools>();
+        services.AddScoped<ChatToolExecutor>();
 
         return services;
     }
