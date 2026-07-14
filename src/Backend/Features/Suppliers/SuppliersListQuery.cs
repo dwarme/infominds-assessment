@@ -1,27 +1,13 @@
-using MediatR;
-
 namespace Backend.Features.Suppliers;
 
-
-public class SupplierListQuery : IRequest<List<SupplierListQueryResponse>>
+public class SupplierListQuery : IRequest<List<SupplierDto>>
 {
     public string? Name { get; set; }
 }
 
-public class SupplierListQueryResponse
+internal class SupplierListQueryHandler(BackendContext context) : IRequestHandler<SupplierListQuery, List<SupplierDto>>
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public string Address { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string Phone { get; set; } = "";
-}
-
-internal class SupplierListQueryHandler(BackendContext context) : IRequestHandler<SupplierListQuery, List<SupplierListQueryResponse>>
-{
-    private readonly BackendContext context = context;
-
-    public async Task<List<SupplierListQueryResponse>> Handle(SupplierListQuery request, CancellationToken cancellationToken)
+    public async Task<List<SupplierDto>> Handle(SupplierListQuery request, CancellationToken cancellationToken)
     {
         SearchQueryLimits.EnsureWithinLimit(request.Name, "Name");
 
@@ -30,22 +16,7 @@ internal class SupplierListQueryHandler(BackendContext context) : IRequestHandle
             query = query.Where(q => q.Name.ToLower().Contains(request.Name.ToLower()));
 
         var data = await query.OrderBy(q => q.Name).ToListAsync(cancellationToken);
-        var result = new List<SupplierListQueryResponse>();
 
-        foreach (var item in data)
-        {
-            var resultItem = new SupplierListQueryResponse
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Address = item.Address,
-                Email = item.Email,
-                Phone = item.Phone,
-            };
-            
-            result.Add(resultItem);
-        }
-
-        return result;
+        return data.Select(SupplierDto.From).ToList();
     }
 }
