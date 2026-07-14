@@ -1,10 +1,21 @@
 namespace Backend.Features.Employees;
 
-public class EmployeesListQuery : IRequest<List<EmployeesListQueryResponse>>
+public class EmployeesListQuery : IRequest<EmployeesListQueryPaginatedResponse>
 {
     public string? SearchText { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
+    public int? Page { get; set; } = 1;
+    public int? PageSize { get; set; } = 50;
+}
+
+public class EmployeesListQueryPaginatedResponse
+{
+    public List<EmployeesListQueryResponse> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; }
 }
 
 public class EmployeesListQueryResponse
@@ -26,12 +37,14 @@ public class EmployeesListQueryResponseDepartment
 }
 
 
-internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandler<EmployeesListQuery, List<EmployeesListQueryResponse>>
+internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandler<EmployeesListQuery, EmployeesListQueryPaginatedResponse>
 {
     private readonly BackendContext context = context;
 
-    public async Task<List<EmployeesListQueryResponse>> Handle(EmployeesListQuery request, CancellationToken cancellationToken)
+    public async Task<EmployeesListQueryPaginatedResponse> Handle(EmployeesListQuery request, CancellationToken cancellationToken)
     {
+        var (page, pageSize) = ListPagination.Normalize(request.Page, request.PageSize);
+
         SearchQueryLimits.EnsureWithinLimit(request.SearchText, "SearchText");
         SearchQueryLimits.EnsureWithinLimit(request.FirstName, "FirstName");
         SearchQueryLimits.EnsureWithinLimit(request.LastName, "LastName");
@@ -54,8 +67,17 @@ internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandl
                 query = query.Where(q => q.LastName.ToLower().Contains(request.LastName.ToLower()));
         }
 
-        var data = await query.OrderBy(q => q.LastName).ThenBy(q => q.FirstName).ToListAsync(cancellationToken);
-        var result = new List<EmployeesListQueryResponse>();
+        var totalCount = await query.CountAsync(cancellationToken);
+        var totalPages = ListPagination.GetTotalPages(totalCount, pageSize);
+
+        var data = await query
+            .OrderBy(q => q.LastName)
+            .ThenBy(q => q.FirstName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var items = new List<EmployeesListQueryResponse>();
 
         foreach (var item in data)
         {
@@ -78,10 +100,16 @@ internal class EmployeesListQueryHandler(BackendContext context) : IRequestHandl
                     Description = department.Description
                 };
 
-
-            result.Add(resultItem);
+            items.Add(resultItem);
         }
 
-        return result;
+        return new EmployeesListQueryPaginatedResponse
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+        };
     }
 }

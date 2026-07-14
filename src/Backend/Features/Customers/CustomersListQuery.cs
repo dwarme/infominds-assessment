@@ -50,13 +50,9 @@ internal class CustomersListQueryHandler(BackendContext context) : IRequestHandl
 {
     private readonly BackendContext context = context;
 
-    // Prevent oversized page requests from loading too many rows at once.
-    private const int MaxPageSize = 100;
-
     public async Task<CustomersListQueryPaginatedResponse> Handle(CustomersListQuery request, CancellationToken cancellationToken)
     {
-        var page = request.Page is null or < 1 ? 1 : request.Page.Value;
-        var pageSize = request.PageSize is null or < 1 ? 50 : Math.Min(request.PageSize.Value, MaxPageSize);
+        var (page, pageSize) = ListPagination.Normalize(request.Page, request.PageSize);
 
         SearchQueryLimits.EnsureWithinLimit(request.SearchText, "SearchText");
 
@@ -68,7 +64,7 @@ internal class CustomersListQueryHandler(BackendContext context) : IRequestHandl
 
         // Count before paging so the client can build pagination controls.
         var totalCount = await query.CountAsync(cancellationToken);
-        var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        var totalPages = ListPagination.GetTotalPages(totalCount, pageSize);
 
         var data = await query
             .OrderBy(q => q.Name)
