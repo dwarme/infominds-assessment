@@ -28,6 +28,11 @@ public static class ChatServiceCollectionExtensions
         services.AddSingleton<ChatSessionStore>();
         services.AddScoped<ChatDataTools>();
         services.AddScoped<ChatToolExecutor>();
+        services.AddHttpClient<OpenAiChatClient>((serviceProvider, client) =>
+        {
+            var settings = serviceProvider.GetRequiredService<IOptions<OpenAiOptions>>().Value;
+            client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
+        });
 
         return services;
     }
