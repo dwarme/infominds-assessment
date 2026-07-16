@@ -125,10 +125,12 @@
     <rect x="740" y="340" width="36" height="18" rx="3" fill="#e3f2fd" stroke="#90caf9"/><text x="758" y="353" font-size="10" font-weight="600" fill="#1565c0" text-anchor="middle">POST</text>
     <text x="784" y="353" fill="#333333">/api/chat/tools/invoke</text>
 
-    <text x="740" y="390" font-size="10" fill="#888888">status: OpenAI configured?</text>
-    <text x="740" y="408" font-size="10" fill="#888888">chat: multi-turn + OpenAI</text>
-    <text x="740" y="426" font-size="10" fill="#888888">tools: list data-retrieval tools</text>
+    <text x="740" y="390" font-size="10" fill="#888888">status: OpenAI + RAG info</text>
+    <text x="740" y="408" font-size="10" fill="#888888">chat: multi-turn + OpenAI tools</text>
+    <text x="740" y="426" font-size="10" fill="#888888">tools: CRM + document RAG</text>
     <text x="740" y="444" font-size="10" fill="#888888">invoke: run tool directly</text>
+    <text x="740" y="468" font-size="10" fill="#888888">RAG tools (no new routes):</text>
+    <text x="740" y="486" font-size="10" fill="#888888">list/search document chunks</text>
   </g>
 
   <!-- arrows from gateway to groups -->
