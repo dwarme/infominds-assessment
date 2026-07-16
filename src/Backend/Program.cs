@@ -1,5 +1,6 @@
 using Backend.Features.Chat;
 using Backend.Features.Documents;
+using Backend.Features.Rag;
 using Microsoft.AspNetCore.Http.Features;
 
 var contentRoot = Directory.GetCurrentDirectory();
@@ -13,6 +14,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 builder.Services.AddChatServices(builder.Configuration);
+builder.Services.AddRagServices(builder.Configuration);
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = DocumentUploadLimits.MaxFileSizeBytes;
