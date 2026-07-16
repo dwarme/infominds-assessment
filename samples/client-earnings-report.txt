@@ -1,0 +1,20 @@
+Client Earnings Report
+
+Client: Acme Industries
+Reporting Period: June 2026
+
+Summary
+- Gross Revenue: $25,000.00
+- Fees: $1,250.00
+- Taxes Withheld: $2,375.00
+- Net Earnings: $21,375.00
+
+Transactions
+| Date | Description | Amount |
+|---|---|---:|
+|2026-06-03|Consulting Services|10000.00|
+|2026-06-12|Maintenance Retainer|5000.00|
+|2026-06-20|Project Milestone Payment|10000.00|
+
+Notes
+This is a fictional sample report for demonstration purposes only.

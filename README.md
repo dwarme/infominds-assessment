@@ -41,7 +41,7 @@ Swagger is available at `http://localhost:5000/swagger` when the backend is runn
 
 ## AI chat
 
-The app includes a floating chat widget (bottom-right) that answers natural-language questions about **Customers** and **Suppliers** using OpenAI and live database data.
+The app includes a floating chat widget (bottom-right) that answers natural-language questions about **Customers**, **Suppliers**, and their **uploaded documents** using OpenAI, live EF Core data, and RAG over document chunks.
 
 ### Setup
 
@@ -56,29 +56,32 @@ The app includes a floating chat widget (bottom-right) that answers natural-lang
    ```bash
    OPENAI_API_KEY=sk-your-key-here
    OPENAI_MODEL=gpt-4o-mini
+   # optional — defaults to text-embedding-3-small
+   # OPENAI_EMBEDDING_MODEL=text-embedding-3-small
    ```
 
-   `OPENAI_MODEL` is optional (defaults to `gpt-4o-mini`). Never commit `.env.local`.
+   `OPENAI_MODEL` and `OPENAI_EMBEDDING_MODEL` are optional. Never commit `.env.local`.
 
 3. Restart the backend after changing env vars.
 
-Without an API key, the backend still starts; chat returns `503` and the widget shows a configuration warning.
+Without an API key, the backend still starts; chat returns `503` and the widget shows a configuration warning. Document upload still works; indexing is skipped until a key is set.
 
 ### How it works
 
 ![AI chat architecture](docs/ai-chat-architecture.svg)
 
 - **LLM:** OpenAI Chat Completions API (`gpt-4o-mini`) with **tool calling**
-- **Data retrieval:** the model picks from EF-backed tools; the backend runs the query and returns JSON results to the model for the final answer
+- **Structured data:** the model picks EF-backed tools (customers/suppliers); the backend runs the query and returns JSON
+- **Documents (RAG):** uploads are chunked, embedded, and stored in SQLite; chat tools retrieve top-k chunks as context
 - **History:** server-side in-memory sessions keyed by `conversationId` (multi-turn follow-ups supported)
 
 ### Chat API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/chat/status` | Whether OpenAI is configured and which model is used |
+| `GET` | `/api/chat/status` | Whether OpenAI is configured, chat/embedding models, indexed chunk count |
 | `POST` | `/api/chat` | Send a message; optional `conversationId` for follow-ups |
-| `GET` | `/api/chat/tools` | List available data-retrieval tools |
+| `GET` | `/api/chat/tools` | List available tools (structured data + document RAG) |
 | `POST` | `/api/chat/tools/invoke` | Invoke a tool directly (for testing) |
 
 `POST /api/chat` body:
@@ -92,9 +95,17 @@ Without an API key, the backend still starts; chat returns `503` and the widget 
 
 ### Example questions
 
+**Customers / suppliers**
+
 - "Quanti clienti ci sono nella categoria Garden?"
 - "Quali fornitori hanno email su dominio gmail.com?"
 - "Qual è l'IBAN del cliente Acquadro?"
+
+**Documents (RAG)**
+
+- "What is the net earnings in the Acme report?"
+- "Cosa diceva l'ultimo contratto del cliente X?"
+- "Quali fornitori hanno menzionato problemi di consegna nei documenti?"
 
 Follow-up questions (e.g. "mostrami i loro dati") use the same `conversationId` from the previous response.
 
@@ -103,4 +114,44 @@ Follow-up questions (e.g. "mostrami i loro dati") use the same `conversationId` 
 - Message length: 100 characters (same as list search filters)
 - Session history: last 40 messages per conversation (system prompt retained)
 - OpenAI request timeout: 60 seconds
-- Tool search results: max 20 rows per query
+- Tool search results: max 20 rows per structured query; RAG returns top-k **5** chunks
+
+## RAG (document Q&A)
+
+Upload `.txt` or `.md` files (max **1 MB**) on Customer or Supplier detail pages. On upload the backend:
+
+1. Saves full text in `Documents` (source of truth for download/preview)
+2. Splits text into chunks (~800 characters, 100-character overlap, paragraph-aware)
+3. Embeds chunks with OpenAI and stores them in `DocumentChunks`
+
+In **Development**, documents without chunks (including seed data) are **backfilled on startup** when `OPENAI_API_KEY` is set.
+
+Chat then uses tools such as `list_documents_for_customer`, `list_documents_for_supplier`, and `search_document_chunks` so the model can answer from retrieved passages.
+
+![RAG architecture](docs/rag-architecture.svg)
+
+**Design choices and rationale** (why these options, rejected alternatives, phase history): see [docs/rag.md](docs/rag.md).
+
+### Choices (documented for the assessment)
+
+| Area | Choice |
+|------|--------|
+| Chunking | ~800 characters, 100-character overlap, paragraph-first |
+| Embeddings | OpenAI `text-embedding-3-small` (same `OPENAI_API_KEY` as chat) |
+| Vector store | SQLite table `DocumentChunks` + in-app **cosine similarity** |
+| Top-k | **5** chunks per search |
+
+Optional override: `OPENAI_EMBEDDING_MODEL` in `.env.local`.
+
+**Free-tier alternative (not implemented):** Google `text-embedding-004` via AI Studio — would need a second API key; we kept one provider for simplicity.
+
+### Sample file
+
+A demo report lives at `samples/client-earnings-report.txt`. Upload it on a customer or supplier detail page, then ask chat about net earnings, fees, or June 2026 transactions.
+
+### RAG limits
+
+- Allowed types: `.txt`, `.md` only; max 1 MB
+- Indexing requires `OPENAI_API_KEY` (upload still succeeds without it)
+- Search query length: 100 characters
+- Brute-force cosine over all matching chunks (fine for assessment-scale corpora)

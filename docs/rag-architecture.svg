@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 420" role="img" aria-labelledby="rag-arch-title rag-arch-desc">
+  <title id="rag-arch-title">RAG Architecture</title>
+  <desc id="rag-arch-desc">Upload indexes documents into chunks with embeddings; chat retrieves top-k chunks via search_document_chunks for the LLM answer.</desc>
+
+  <defs>
+    <marker id="rag-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#2e7d32"/>
+    </marker>
+  </defs>
+
+  <rect x="10" y="10" width="960" height="400" rx="10" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="28" y="42" font-family="Segoe UI, system-ui, sans-serif" font-size="18" font-weight="600" fill="#333333">RAG flow</text>
+
+  <text x="28" y="78" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="600" fill="#2e7d32">Index (on upload / backfill)</text>
+
+  <g font-family="Segoe UI, system-ui, sans-serif" font-size="12" fill="#222222" text-anchor="middle">
+    <rect x="28" y="92" width="150" height="40" rx="4" fill="#e8f5e9" stroke="#81c784"/>
+    <text x="103" y="116">Upload .txt / .md</text>
+
+    <line x1="178" y1="112" x2="218" y2="112" stroke="#2e7d32" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="218" y="92" width="130" height="40" rx="4" fill="#e8f5e9" stroke="#81c784"/>
+    <text x="283" y="116">Documents</text>
+
+    <line x1="348" y1="112" x2="388" y2="112" stroke="#2e7d32" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="388" y="92" width="130" height="40" rx="4" fill="#e8f5e9" stroke="#81c784"/>
+    <text x="453" y="116">Chunker</text>
+
+    <line x1="518" y1="112" x2="558" y2="112" stroke="#2e7d32" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="558" y="92" width="160" height="40" rx="4" fill="#e8f5e9" stroke="#81c784"/>
+    <text x="638" y="116">OpenAI embeddings</text>
+
+    <line x1="718" y1="112" x2="758" y2="112" stroke="#2e7d32" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="758" y="92" width="180" height="40" rx="4" fill="#e8f5e9" stroke="#81c784"/>
+    <text x="848" y="116">DocumentChunks</text>
+  </g>
+
+  <text x="28" y="188" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="600" fill="#1565c0">Retrieve (chat tools)</text>
+
+  <g font-family="Segoe UI, system-ui, sans-serif" font-size="12" fill="#222222" text-anchor="middle">
+    <rect x="28" y="202" width="150" height="40" rx="4" fill="#e3f2fd" stroke="#64b5f6"/>
+    <text x="103" y="226">ChatWidget</text>
+
+    <line x1="178" y1="222" x2="218" y2="222" stroke="#1565c0" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="218" y="202" width="150" height="40" rx="4" fill="#e3f2fd" stroke="#64b5f6"/>
+    <text x="293" y="226">OpenAI + tools</text>
+
+    <line x1="368" y1="222" x2="408" y2="222" stroke="#1565c0" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="408" y="202" width="200" height="40" rx="4" fill="#e3f2fd" stroke="#64b5f6"/>
+    <text x="508" y="226">search_document_chunks</text>
+
+    <line x1="608" y1="222" x2="648" y2="222" stroke="#1565c0" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="648" y="202" width="150" height="40" rx="4" fill="#e3f2fd" stroke="#64b5f6"/>
+    <text x="723" y="226">Cosine top-k</text>
+
+    <line x1="798" y1="222" x2="838" y2="222" stroke="#1565c0" stroke-width="2" marker-end="url(#rag-arrow)"/>
+
+    <rect x="838" y="202" width="100" height="40" rx="4" fill="#e3f2fd" stroke="#64b5f6"/>
+    <text x="888" y="226">Answer</text>
+  </g>
+
+  <text x="28" y="290" font-family="Segoe UI, system-ui, sans-serif" font-size="13" font-weight="600" fill="#555555">Defaults</text>
+  <text x="28" y="318" font-family="Segoe UI, system-ui, sans-serif" font-size="12" fill="#444444">Chunking: ~800 chars, 100 overlap (paragraph-aware)</text>
+  <text x="28" y="342" font-family="Segoe UI, system-ui, sans-serif" font-size="12" fill="#444444">Embeddings: text-embedding-3-small (same OPENAI_API_KEY as chat)</text>
+  <text x="28" y="366" font-family="Segoe UI, system-ui, sans-serif" font-size="12" fill="#444444">Store: SQLite DocumentChunks + in-app cosine similarity | Top-k: 5</text>
+  <text x="28" y="390" font-family="Segoe UI, system-ui, sans-serif" font-size="12" fill="#666666">See docs/rag.md for rationale and alternatives.</text>
+</svg>

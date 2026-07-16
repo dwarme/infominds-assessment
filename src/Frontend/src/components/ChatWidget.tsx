@@ -30,12 +30,17 @@ interface ChatApiResponse {
 interface ChatStatusResponse {
   configured: boolean;
   model: string;
+  embeddingModel?: string;
+  ragConfigured?: boolean;
+  indexedChunkCount?: number;
+  topK?: number;
 }
 
 const EXAMPLE_QUESTIONS = [
   "Quanti clienti ci sono nella categoria Garden?",
   "Quali fornitori hanno email su dominio gmail.com?",
-  "Qual è l'IBAN del cliente Acquadro?",
+  "What is the net earnings in the Acme report?",
+  "Fees and taxes in Cerutti supplier documents?",
 ];
 
 export default function ChatWidget() {
@@ -47,6 +52,8 @@ export default function ChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const [chatConfigured, setChatConfigured] = useState<boolean | null>(null);
   const [chatModel, setChatModel] = useState<string | null>(null);
+  const [embeddingModel, setEmbeddingModel] = useState<string | null>(null);
+  const [indexedChunkCount, setIndexedChunkCount] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,6 +71,10 @@ export default function ChatWidget() {
         const status = data as ChatStatusResponse;
         setChatConfigured(status.configured);
         setChatModel(status.model);
+        setEmbeddingModel(status.embeddingModel ?? null);
+        setIndexedChunkCount(
+          typeof status.indexedChunkCount === "number" ? status.indexedChunkCount : null,
+        );
       })
       .catch(() => {
         setChatConfigured(false);
@@ -152,8 +163,10 @@ export default function ChatWidget() {
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="subtitle1">AI Assistant</Typography>
               {chatModel && (
-                <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                <Typography variant="caption" sx={{ opacity: 0.85, display: "block" }}>
                   {chatModel}
+                  {embeddingModel ? ` · ${embeddingModel}` : ""}
+                  {indexedChunkCount != null ? ` · ${indexedChunkCount} chunks` : ""}
                 </Typography>
               )}
             </Box>
@@ -187,8 +200,8 @@ export default function ChatWidget() {
             {messages.length === 0 && !loading && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mt: 1 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Ask about customers or suppliers in natural language. The assistant queries
-                  live data from the database.
+                  Ask about customers, suppliers, or uploaded documents. The assistant uses live
+                  database tools and RAG over indexed document chunks.
                 </Typography>
                 <Stack spacing={1}>
                   {EXAMPLE_QUESTIONS.map((question) => (
