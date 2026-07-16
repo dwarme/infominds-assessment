@@ -28,7 +28,9 @@ public static class RagServiceCollectionExtensions
                     options.EmbeddingDimensions = 1536;
             });
 
-        // Embedding client, chunker, indexer, and search are registered in later RAG phases.
+        services.AddSingleton<DocumentChunker>();
+
+        // Embedding client, indexer, and search are registered in later RAG phases.
         return services;
     }
 
