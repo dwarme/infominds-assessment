@@ -75,6 +75,14 @@ Without an API key, the backend still starts; chat returns `503` and the widget 
 - **Documents (RAG):** uploads are chunked, embedded, and stored in SQLite; chat tools retrieve top-k chunks as context
 - **History:** server-side in-memory sessions keyed by `conversationId` (multi-turn follow-ups supported)
 
+### Documented choices (assessment requirement)
+
+| Requirement | Choice |
+|-------------|--------|
+| **LLM** | OpenAI **`gpt-4o-mini`** via Chat Completions (`OPENAI_API_KEY` / optional `OPENAI_MODEL`) |
+| **Data retrieval** | **Tool calling (hybrid):** the model selects EF Core–backed tools; the backend executes the query and returns JSON for the final answer (no free-text SQL from the LLM) |
+| **Conversation history** | **Server-side in-memory** store keyed by `conversationId`; client sends the id on follow-ups; last **40** messages kept (system prompt retained); lost on process restart |
+
 ### Chat API
 
 | Method | Endpoint | Description |
@@ -132,18 +140,20 @@ Chat then uses tools such as `list_documents_for_customer`, `list_documents_for_
 
 **Design choices and rationale** (why these options, rejected alternatives, phase history): see [docs/rag.md](docs/rag.md).
 
-### Choices (documented for the assessment)
+### Documented choices (assessment requirement)
 
-| Area | Choice |
-|------|--------|
-| Chunking | ~800 characters, 100-character overlap, paragraph-first |
-| Embeddings | OpenAI `text-embedding-3-small` (same `OPENAI_API_KEY` as chat) |
-| Vector store | SQLite table `DocumentChunks` + in-app **cosine similarity** |
-| Top-k | **5** chunks per search |
+| Requirement | Choice |
+|-------------|--------|
+| **Chunking strategy** | Paragraph-first (split on blank lines), merge up to ~**800** characters, **100**-character overlap; longer paragraphs are hard-split |
+| **Embedding model** | OpenAI **`text-embedding-3-small`** (1536 dims), same `OPENAI_API_KEY` as chat |
+| **Vector store** | Embedded SQLite: **`DocumentChunks`** table (text + JSON embedding) + in-process **cosine similarity** (no external vector DB) |
+| **Top-k** | **5** most similar chunks per search |
 
 Optional override: `OPENAI_EMBEDDING_MODEL` in `.env.local`.
 
-**Free-tier alternative (not implemented):** Google `text-embedding-004` via AI Studio — would need a second API key; we kept one provider for simplicity.
+**Free-tier alternative (not implemented):** Google `text-embedding-004` on AI Studio — would need a second provider key; one provider kept for simplicity.
+
+Full rationale and rejected alternatives: [docs/rag.md](docs/rag.md).
 
 ### Sample file
 
