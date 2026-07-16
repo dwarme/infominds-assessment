@@ -29,8 +29,13 @@ public static class RagServiceCollectionExtensions
             });
 
         services.AddSingleton<DocumentChunker>();
+        services.AddHttpClient<OpenAiEmbeddingClient>((serviceProvider, client) =>
+        {
+            var settings = serviceProvider.GetRequiredService<IOptions<OpenAiOptions>>().Value;
+            client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
+        });
 
-        // Embedding client, indexer, and search are registered in later RAG phases.
+        // Indexer and search are registered in later RAG phases.
         return services;
     }
 
