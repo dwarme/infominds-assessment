@@ -10,14 +10,13 @@ import {
   TableHead,
   TableRow,
   Typography,
-  styled,
-  tableCellClasses,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useEffect, useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import DocumentContentModal from "../components/DocumentContentModal";
 import DocumentUploadDialog, { UploadedDocument } from "../components/DocumentUploadDialog";
+import StyledTableHeadCell from "../components/StyledTableHeadCell";
 import { downloadDocument } from "../utils/downloadDocument";
 
 interface SupplierDetail {
@@ -223,10 +222,3 @@ export default function SupplierDetailPage() {
     </>
   );
 }
-
-const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.primary.light,
-    color: theme.palette.common.white,
-  },
-}));
