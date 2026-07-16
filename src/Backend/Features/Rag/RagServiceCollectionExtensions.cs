@@ -35,8 +35,8 @@ public static class RagServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
         });
         services.AddScoped<DocumentIndexer>();
+        services.AddScoped<DocumentChunkSearch>();
 
-        // Search is registered in a later RAG phase.
         return services;
     }
 
