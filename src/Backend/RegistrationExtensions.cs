@@ -1,5 +1,7 @@
 namespace Backend;
 
+using Backend.Features.Rag;
+
 static class RegistrationExtensions
 {
     public static void UseSwaggerDocumentation(this WebApplication app)
@@ -20,7 +22,16 @@ static class RegistrationExtensions
         EnsureDocumentChunksTable(context);
 
         if (app.Environment.IsDevelopment())
+        {
             context.Seed();
+            BackfillRagIndex(scope.ServiceProvider);
+        }
+    }
+
+    static void BackfillRagIndex(IServiceProvider services)
+    {
+        var indexer = services.GetRequiredService<DocumentIndexer>();
+        indexer.IndexUnindexedDocumentsAsync(CancellationToken.None).GetAwaiter().GetResult();
     }
 
     static void EnsureDocumentsTable(BackendContext context)

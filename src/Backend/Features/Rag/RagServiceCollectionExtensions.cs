@@ -34,8 +34,9 @@ public static class RagServiceCollectionExtensions
             var settings = serviceProvider.GetRequiredService<IOptions<OpenAiOptions>>().Value;
             client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
         });
+        services.AddScoped<DocumentIndexer>();
 
-        // Indexer and search are registered in later RAG phases.
+        // Search is registered in a later RAG phase.
         return services;
     }
 

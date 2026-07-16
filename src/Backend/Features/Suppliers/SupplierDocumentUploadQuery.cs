@@ -1,6 +1,7 @@
 namespace Backend.Features.Suppliers;
 
 using Backend.Features.Documents;
+using Backend.Features.Rag;
 
 public class SupplierDocumentUploadQuery : IRequest<IResult>
 {
@@ -8,7 +9,10 @@ public class SupplierDocumentUploadQuery : IRequest<IResult>
     public IFormFile File { get; set; } = null!;
 }
 
-internal class SupplierDocumentUploadQueryHandler(BackendContext context)
+internal class SupplierDocumentUploadQueryHandler(
+    BackendContext context,
+    DocumentIndexer documentIndexer,
+    ILogger<SupplierDocumentUploadQueryHandler> logger)
     : IRequestHandler<SupplierDocumentUploadQuery, IResult>
 {
     public async Task<IResult> Handle(SupplierDocumentUploadQuery request, CancellationToken cancellationToken)
@@ -40,6 +44,18 @@ internal class SupplierDocumentUploadQueryHandler(BackendContext context)
 
         context.Documents.Add(document);
         await context.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await documentIndexer.IndexDocumentAsync(document.Id, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Document {DocumentId} was saved but RAG indexing failed.",
+                document.Id);
+        }
 
         var response = new SupplierDocumentsListQueryResponseItem
         {
