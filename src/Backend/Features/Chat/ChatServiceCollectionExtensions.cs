@@ -27,6 +27,7 @@ public static class ChatServiceCollectionExtensions
 
         services.AddSingleton<ChatSessionStore>();
         services.AddScoped<ChatDataTools>();
+        services.AddScoped<ChatDocumentTools>();
         services.AddScoped<ChatToolExecutor>();
         services.AddHttpClient<OpenAiChatClient>((serviceProvider, client) =>
         {

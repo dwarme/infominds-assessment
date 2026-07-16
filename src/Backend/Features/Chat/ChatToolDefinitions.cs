@@ -9,6 +9,9 @@ public static class ChatToolNames
     public const string GetCustomerByName = "get_customer_by_name";
     public const string SearchSuppliersByEmailDomain = "search_suppliers_by_email_domain";
     public const string SearchSuppliers = "search_suppliers";
+    public const string ListDocumentsForCustomer = "list_documents_for_customer";
+    public const string ListDocumentsForSupplier = "list_documents_for_supplier";
+    public const string SearchDocumentChunks = "search_document_chunks";
 }
 
 public static class ChatToolDefinitions
@@ -95,6 +98,45 @@ public static class ChatToolDefinitions
                     email = new { type = "string", description = "Partial supplier email match." },
                     phone = new { type = "string", description = "Partial supplier phone match." },
                 },
+            }),
+        Tool(
+            ChatToolNames.ListDocumentsForCustomer,
+            "List uploaded documents for a customer by name, newest first. Use for 'latest contract' or to discover document ids/titles before searching content.",
+            new
+            {
+                type = "object",
+                properties = new
+                {
+                    customerName = new { type = "string", description = "Partial customer name match." },
+                },
+                required = new[] { "customerName" },
+            }),
+        Tool(
+            ChatToolNames.ListDocumentsForSupplier,
+            "List uploaded documents for a supplier by name, newest first.",
+            new
+            {
+                type = "object",
+                properties = new
+                {
+                    supplierName = new { type = "string", description = "Partial supplier name match." },
+                },
+                required = new[] { "supplierName" },
+            }),
+        Tool(
+            ChatToolNames.SearchDocumentChunks,
+            "Semantically search document content (contracts, reports, notes). Use when the user asks what a document says, earnings, fees, delivery issues, etc. Optionally scope by customerName, supplierName, or documentId.",
+            new
+            {
+                type = "object",
+                properties = new
+                {
+                    query = new { type = "string", description = "Natural-language search query about document content." },
+                    customerName = new { type = "string", description = "Optional: limit to documents of customers matching this name." },
+                    supplierName = new { type = "string", description = "Optional: limit to documents of suppliers matching this name." },
+                    documentId = new { type = "integer", description = "Optional: limit search to one document id." },
+                },
+                required = new[] { "query" },
             }),
     ];
 

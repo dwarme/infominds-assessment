@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Backend.Features.Chat;
 
-public class ChatToolExecutor(ChatDataTools dataTools)
+public class ChatToolExecutor(ChatDataTools dataTools, ChatDocumentTools documentTools)
 {
     public IReadOnlyList<OpenAiToolDefinition> Definitions => ChatToolDefinitions.All;
 
@@ -41,6 +41,21 @@ public class ChatToolExecutor(ChatDataTools dataTools)
                     GetOptionalString(arguments, "email"),
                     GetOptionalString(arguments, "phone"),
                     cancellationToken),
+            ChatToolNames.ListDocumentsForCustomer =>
+                await documentTools.ListDocumentsForCustomerAsync(
+                    RequireString(arguments, "customerName"),
+                    cancellationToken),
+            ChatToolNames.ListDocumentsForSupplier =>
+                await documentTools.ListDocumentsForSupplierAsync(
+                    RequireString(arguments, "supplierName"),
+                    cancellationToken),
+            ChatToolNames.SearchDocumentChunks =>
+                await documentTools.SearchDocumentChunksAsync(
+                    RequireString(arguments, "query"),
+                    GetOptionalString(arguments, "customerName"),
+                    GetOptionalString(arguments, "supplierName"),
+                    GetOptionalInt(arguments, "documentId"),
+                    cancellationToken),
             _ => throw new BadHttpRequestException($"Unknown chat tool '{toolName}'."),
         };
 
@@ -69,5 +84,20 @@ public class ChatToolExecutor(ChatDataTools dataTools)
 
         var value = property.GetString();
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static int? GetOptionalInt(JsonElement arguments, string propertyName)
+    {
+        if (!arguments.TryGetProperty(propertyName, out var property))
+            return null;
+
+        if (property.ValueKind == JsonValueKind.Number && property.TryGetInt32(out var number))
+            return number;
+
+        if (property.ValueKind == JsonValueKind.String &&
+            int.TryParse(property.GetString(), out var parsed))
+            return parsed;
+
+        return null;
     }
 }

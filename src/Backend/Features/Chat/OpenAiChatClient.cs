@@ -9,7 +9,7 @@ public class OpenAiChatClient(
     IOptions<OpenAiOptions> options,
     ChatToolExecutor toolExecutor)
 {
-    private const int MaxToolRounds = 5;
+    private const int MaxToolRounds = 8;
     private const int MaxTokens = 1000;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
