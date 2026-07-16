@@ -39,8 +39,6 @@ interface ChatStatusResponse {
 const EXAMPLE_QUESTIONS = [
   "Quanti clienti ci sono nella categoria Garden?",
   "Quali fornitori hanno email su dominio gmail.com?",
-  "What is the net earnings in the Acme report?",
-  "Fees and taxes in Cerutti supplier documents?",
 ];
 
 export default function ChatWidget() {
