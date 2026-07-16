@@ -17,6 +17,7 @@ static class RegistrationExtensions
         var context = scope.ServiceProvider.GetRequiredService<BackendContext>();
         context.Database.EnsureCreated();
         EnsureDocumentsTable(context);
+        EnsureDocumentChunksTable(context);
 
         if (app.Environment.IsDevelopment())
             context.Seed();
@@ -40,6 +41,41 @@ static class RegistrationExtensions
                     (CustomerId IS NULL AND SupplierId IS NOT NULL)
                 )
             );
+            """);
+    }
+
+    static void EnsureDocumentChunksTable(BackendContext context)
+    {
+        // EnsureCreated() skips schema updates on an existing database.
+        context.Database.ExecuteSqlRaw("""
+            CREATE TABLE IF NOT EXISTS "DocumentChunks" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_DocumentChunks" PRIMARY KEY AUTOINCREMENT,
+                "DocumentId" INTEGER NOT NULL,
+                "ChunkIndex" INTEGER NOT NULL,
+                "Text" TEXT NOT NULL,
+                "EmbeddingJson" TEXT NOT NULL,
+                "CustomerId" INTEGER NULL,
+                "SupplierId" INTEGER NULL,
+                CONSTRAINT "FK_DocumentChunks_Documents_DocumentId" FOREIGN KEY ("DocumentId") REFERENCES "Documents" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "CK_DocumentChunks_Owner" CHECK (
+                    (CustomerId IS NOT NULL AND SupplierId IS NULL) OR
+                    (CustomerId IS NULL AND SupplierId IS NOT NULL)
+                )
+            );
+            """);
+
+        context.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS "IX_DocumentChunks_DocumentId" ON "DocumentChunks" ("DocumentId");
+            """);
+        context.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS "IX_DocumentChunks_CustomerId" ON "DocumentChunks" ("CustomerId");
+            """);
+        context.Database.ExecuteSqlRaw("""
+            CREATE INDEX IF NOT EXISTS "IX_DocumentChunks_SupplierId" ON "DocumentChunks" ("SupplierId");
+            """);
+        context.Database.ExecuteSqlRaw("""
+            CREATE UNIQUE INDEX IF NOT EXISTS "IX_DocumentChunks_DocumentId_ChunkIndex"
+            ON "DocumentChunks" ("DocumentId", "ChunkIndex");
             """);
     }
 }

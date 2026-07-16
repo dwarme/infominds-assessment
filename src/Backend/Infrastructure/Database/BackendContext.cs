@@ -8,6 +8,7 @@ public class BackendContext(DbContextOptions<BackendContext> options) : DbContex
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Document> Documents => Set<Document>();
+    public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -17,6 +18,7 @@ public class BackendContext(DbContextOptions<BackendContext> options) : DbContex
         modelBuilder.ApplyConfiguration(new EmployeeConfiguration());
         modelBuilder.ApplyConfiguration(new DepartmentConfiguration());
         modelBuilder.ApplyConfiguration(new DocumentConfiguration());
+        modelBuilder.ApplyConfiguration(new DocumentChunkConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 
